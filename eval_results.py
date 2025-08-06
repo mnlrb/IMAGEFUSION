@@ -1,35 +1,65 @@
-import numpy as np
-from sklearn.metrics import classification_report, confusion_matrix
-import seaborn as sns
+import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
+LOG_DIR = "results"
 
-y_true = np.load("labels.npy")
-y_pred = np.load("preds.npy")
+def plot_training_curve(exp_name):
+    """Plot training metrics for a single experiment."""
+    log_file = os.path.join(LOG_DIR, f"{exp_name}_training_log.csv")
+    if not os.path.exists(log_file):
+        print(f"No log file for {exp_name}")
+        return
 
-classes = ["NN", "YN", "YY"]
-labels = [0, 1, 2]
+    df = pd.read_csv(log_file)
+    plt.figure(figsize=(10,6))
+    plt.plot(df["epoch"], df["train_loss"], marker="o", label="Train Loss")
+    plt.plot(df["epoch"], df["val_loss"], marker="s", label="Val Loss")
+    plt.plot(df["epoch"], df["precision"], marker="^", label="Precision")
+    plt.plot(df["epoch"], df["recall"], marker="x", label="Recall")
+    plt.plot(df["epoch"], df["f1"], marker="d", label="F1")
 
-# REPORT
-report = classification_report(
-    y_true, y_pred,
-    labels=labels,
-    target_names=classes,
-    zero_division=0
-)
-print(report)
+    plt.xlabel("Epoch")
+    plt.ylabel("Score / Loss")
+    plt.title(f"Training Curve - {exp_name}")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.tight_layout()
+    out_file = os.path.join(LOG_DIR, f"{exp_name}_training_curve.png")
+    plt.savefig(out_file)
+    plt.close()
+    print(f"Training curve saved to {out_file}")
 
+def plot_f1_comparison(experiments):
+    """Plot F1 curves of all experiments on the same figure."""
+    plt.figure(figsize=(12,7))
+    for exp in experiments:
+        log_file = os.path.join(LOG_DIR, f"{exp}_training_log.csv")
+        if not os.path.exists(log_file):
+            print(f"Skipping {exp}, no log file.")
+            continue
+        df = pd.read_csv(log_file)
+        plt.plot(df["epoch"], df["f1"], marker="o", label=exp)
 
-with open("eval_report.txt", "w") as f:
-    f.write(report)
+    plt.xlabel("Epoch")
+    plt.ylabel("F1 Score")
+    plt.title("F1 Score Comparison Across Experiments")
+    plt.legend(loc="lower right")
+    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.tight_layout()
+    out_file = os.path.join(LOG_DIR, "all_experiments_f1_comparison.png")
+    plt.savefig(out_file)
+    plt.close()
+    print(f"Overall F1 comparison plot saved to {out_file}")
 
-# confusion MATRIX
-cm = confusion_matrix(y_true, y_pred, labels=labels)
-sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-            xticklabels=classes, yticklabels=classes)
-plt.xlabel("Predicted")
-plt.ylabel("True")
-plt.title("Confusion Matrix")
-plt.savefig("eval_confusion_matrix.png")
-plt.close()
-print("save to eval_report.txt and eval_confusion_matrix.png")
+if __name__ == "__main__":
+    experiments = [
+        "rgb_only_resnet18","ir_only_resnet18","rgb_only_mobilenet",
+        "ir_only_mobilenet","fusion_early_resnet18","fusion_late_resnet18",
+        "fusion_late_mobilenet","fusion_late_vgg16","fusion_late_efficientnet"
+    ]
+
+    for exp in experiments:
+        plot_training_curve(exp)
+
+    plot_f1_comparison(experiments)
