@@ -1,0 +1,48 @@
+data:
+  csv_file: D:/frame_labels_aligned.csv
+
+training:
+  batch_size: 64
+  epochs: 30
+  image_size: 224
+  learning_rate: 0.0003
+
+logging:
+  output_dir: results
+
+experiments:
+  - name: rgb_only_resnet18
+    fusion: single
+    backbone: resnet18
+
+  - name: ir_only_resnet18
+    fusion: single
+    backbone: resnet18
+
+  - name: rgb_only_mobilenet
+    fusion: single
+    backbone: mobilenet
+
+  - name: ir_only_mobilenet
+    fusion: single
+    backbone: mobilenet
+
+  - name: fusion_early_resnet18
+    fusion: early
+    backbone: resnet18
+
+  - name: fusion_late_resnet18
+    fusion: late
+    backbone: resnet18
+
+  - name: fusion_late_mobilenet
+    fusion: late
+    backbone: mobilenet
+
+  - name: fusion_late_vgg16
+    fusion: late
+    backbone: vgg16
+
+  - name: fusion_late_efficientnet
+    fusion: late
+    backbone: efficientnet
